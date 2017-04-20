@@ -1,4 +1,4 @@
-# Maze Generators and Solver
+# Maze Generators and a maze solver
 
 The project consists of two maze generators and one maze solver. The mazes in this project are generated either using randomized Prim's algorithm, or using depth-first search. Mazes are solved using breath-first search to find the exiting node.
 
