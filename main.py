@@ -13,6 +13,7 @@ SEEN = 1
 UNSEEN = 0
 
 WHITE = 255
+DARK_GREEN = (0, 150, 0)
 
 def print_info(rows, cols):
     print("Generating maze with {0} rows and {1} columns...".format(rows, cols))
@@ -114,11 +115,33 @@ def is_edge(index, max_rows, max_cols):
     else:
         return False
 
-# Generates a random maze with given parameters
-def generate_maze(rows, cols, exits):
-    print_info(rows, cols)
+def generate_empty_maze(rows, cols):
+    maze = np.ones((rows, cols), dtype = [('L', 'i1'), ('R', 'i1'), ('T', 'i1'), ('B', 'i1'), ('exit', 'b')])
+    maze[:]['exit'] = False
+    return maze
 
-    maze = np.ones((rows, cols), dtype = [('L', 'i1'), ('R', 'i1'), ('T', 'i1'), ('B', 'i1')])
+def get_edge_cells(maze):
+    rows, cols = maze.shape
+
+    rr = np.arange(rows)
+    cc = np.arange(cols)
+
+    edges = set([(a, b) for a in rr for b in [0, cols-1]] + \
+                [(a, b) for a in [0, rows-1] for b in cc])
+
+    return edges
+
+def add_exits(maze, exit_num):
+    edge_cells = get_edge_cells(maze)
+    chosen_exits = random.sample(edge_cells, exit_num)
+
+    for exit in chosen_exits:
+        maze[exit]['exit'] = True
+
+# Generates a random maze with given parameters
+def generate_maze_dfs(rows, cols, exits):
+    print_info(rows, cols)
+    maze = generate_empty_maze(rows, cols)
     is_seen = np.zeros((rows, cols), dtype = np.uint8)
 
     # Generate a random starting point and mark it as visited
@@ -155,10 +178,21 @@ def generate_maze(rows, cols, exits):
         # Add found index to trace
         trace.append(current_index)
 
-        # If reached edge of maze, exit
-        #if(is_edge(current_index, rows, cols) == True):
-        #    break
+    # Add the desired number of exits
+    add_exits(maze, exits)
+
     return maze
+
+def add_exit_to_image(image, i, j, rows, cols):
+
+    if i == 0:
+        image[i*2+1-1, j*2+1] = DARK_GREEN
+    elif j == 0:
+        image[i*2+1, j*2+1-1] = DARK_GREEN
+    elif j == cols-1:
+        image[i*2+1, j*2+1+1] = DARK_GREEN
+    else:
+        image[i*2+1+1, j*2+1] = DARK_GREEN
 
 # Creates an imshow-ready image of the maze
 def maze2image(maze):
@@ -180,7 +214,10 @@ def maze2image(maze):
                 image[i*2+1, j*2+1+1] = WHITE
 
             if(maze[i,j]['B'] != WALL):
-                image[i*2+1+1, j*2+1] = WHITE
+                image[i*2+1+1, j*2+1] = WHITE    
+
+            if maze[i,j]['exit'] == True:
+                add_exit_to_image(image, i, j, rows, cols)
 
     return image
 
@@ -191,7 +228,7 @@ def plot_maze(maze):
     plt.show()
 
 def main():
-    maze = generate_maze(ROWS, COLS, EXITS)
+    maze = generate_maze_dfs(ROWS, COLS, EXITS)
     plot_maze(maze)
 
 if __name__ == "__main__":
